@@ -23,7 +23,7 @@ from transformers import (
     WEIGHTS_NAME,
     AdamW,
     AutoConfig,
-    AutoModelWithLMHead,
+    AutoModelForCausalLM,
     AutoTokenizer,
     PreTrainedModel,
     PreTrainedTokenizer,
@@ -69,7 +69,7 @@ class Args():
         self.no_cuda = False
         self.overwrite_output_dir = True
         self.overwrite_cache = True
-        self.should_continue = True
+        self.should_continue = False
         self.seed = 42
         self.local_rank = -1
         self.fp16 = False
@@ -481,7 +481,7 @@ def main(df_trn, df_val):
 
     config = AutoConfig.from_pretrained(args.config_name, cache_dir=args.cache_dir)
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name, cache_dir=args.cache_dir)
-    model = AutoModelWithLMHead.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(
         args.model_name_or_path,
         from_tf=False,
         config=config,
@@ -516,7 +516,7 @@ def main(df_trn, df_val):
         torch.save(args, os.path.join(args.output_dir, "training_args.bin"))
 
         # Load a trained model and vocabulary that you have fine-tuned
-        model = AutoModelWithLMHead.from_pretrained(args.output_dir)
+        model = AutoModelForCausalLM.from_pretrained(args.output_dir)
         tokenizer = AutoTokenizer.from_pretrained(args.output_dir)
         model.to(args.device)
 
@@ -534,7 +534,7 @@ def main(df_trn, df_val):
             global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
             prefix = checkpoint.split("/")[-1] if checkpoint.find("checkpoint") != -1 else ""
 
-            model = AutoModelWithLMHead.from_pretrained(checkpoint)
+            model = AutoModelForCausalLM.from_pretrained(checkpoint)
             model.to(args.device)
             result = evaluate(args, model, tokenizer, df_trn, df_val, prefix=prefix)
             result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
